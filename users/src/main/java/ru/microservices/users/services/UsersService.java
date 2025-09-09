@@ -1,5 +1,6 @@
 package ru.microservices.users.services;
 
+import org.apache.coyote.BadRequestException;
 import ru.microservices.core.dao.UsersDAO;
 import ru.microservices.core.entities.User;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,9 @@ import ru.microservices.users.dto.CreateOrUpdateUserDTO;
 import ru.microservices.users.dto.UserDTO;
 
 import java.rmi.ServerException;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +34,24 @@ public class UsersService {
         User result = usersDAO.save(user);
 
         return usersDAO.findById(result.getUserId())
-                .map(UsersConverter::convertToUserDTO)
+                .map(usersConverter::convertToUserDTO)
                 .orElseThrow(() -> new ServerException("Не удалось сохранить пользователя"));
 
+    }
+
+    public List<UserDTO> getAllUsers() {
+        /**
+         * TODO
+         * 1)add pagination
+         */
+        return StreamSupport.stream(usersDAO.findAll().spliterator(), false)
+                .map(usersConverter::convertToUserDTO)
+                .toList();
+    }
+
+    public UserDTO getUserById(UUID id) throws BadRequestException {
+        return usersDAO.findById(id)
+                .map(usersConverter::convertToUserDTO)
+                .orElseThrow(() -> new BadRequestException("Пользователь не найден"));
     }
 }
